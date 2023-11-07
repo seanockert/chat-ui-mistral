@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <title>Mistral Chat</title>
+    <style>
+      :root {
+        --size-base: 0.75rem;
+        --size-half: 0.375rem;
+        --size-quarter: 0.1875rem;
+        --size-2x: 1.5rem;
+        --font-weight-base: 400;
+        --font-weight-strong: 700;
+        --font-family: 'Poppins', sans-serif;
+        --color-text-lightest: #666;
+        --color-blue: #4083fd;
+        --color-blue-dark: #2665d5;
+        --border-radius: 0.1875rem;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        overflow-wrap: break-word;
+      }
+
+      html {
+        -moz-text-size-adjust: none;
+        -webkit-text-size-adjust: none;
+        min-height: 100vh;
+        text-size-adjust: none;
+      }
+
+      body {
+        -webkit-font-smoothing: antialiased;
+        color: var(--color-base);
+        font-family: var(--font-family);
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-base);
+        line-height: 1.5;
+        min-height: inherit;
+        text-rendering: optimizeLegibility;
+      }
+
+      main {
+        background-color: #fff;
+        min-height: inherit;
+        margin: 0 auto;
+        max-width: 40rem;
+        padding: var(--size-2x);
+      }
+
+      main > header {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: 40rem;
+        width: 100%;
+        padding: var(--size-base);
+        background-color: inherit;
+        z-index: 5;
+      }
+
+      p {
+        line-height: inherit;
+      }
+
+      button {
+        font: inherit;
+        background-color: #f1f1f1;
+        border-radius: var(--border-radius);
+        border: none;
+        cursor: pointer;
+        font-weight: var(--font-weight-strong);
+        padding: var(--size-half) var(--size-base);
+      }
+
+      button:hover,
+      button:focus {
+        background-color: #ddd;
+      }
+
+      button.primary {
+        background-color: var(--color-blue);
+        color: #fff;
+      }
+
+      button.primary:hover,
+      button.primary:focus {
+        background-color: var(--color-blue-dark);
+      }
+
+      button:active {
+        transform: scale(0.95);
+      }
+
+      label {
+        font-weight: var(--font-weight-strong);
+      }
+
+      [class^='inline'],
+      [class^='stack'] {
+        display: flex;
+        gap: var(--size-base);
+      }
+
+      [class^='inline'] {
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      [class^='stack'] {
+        flex-direction: column;
+      }
+
+      .inline-half,
+      .stack-half {
+        gap: var(--size-half);
+      }
+
+      .inline-between {
+        justify-content: space-between;
+      }
+
+      code {
+        background: #ffeff0;
+        border-radius: var(--border-radius);
+        box-decoration-break: clone;
+        font-family: monospace;
+        padding: 0.1rem 0.3rem 0.2rem;
+        word-wrap: break-word;
+      }
+
+      pre code {
+        background: #ffeff0;
+        display: block;
+        max-width: 100%;
+        min-width: 100px;
+        overflow-x: scroll;
+        padding: var(--size-base);
+        white-space: pre;
+        margin: var(--size-half) 0;
+      }
+
+      .grow-wrap {
+        display: grid;
+        position: relative;
+      }
+
+      .grow-wrap::after {
+        content: attr(data-replicated-value) ' ';
+        visibility: hidden;
+        white-space: pre-wrap;
+      }
+
+      .grow-wrap > textarea {
+        overflow: hidden;
+        resize: none;
+        border-radius: var(--border-radius);
+      }
+
+      .grow-wrap > textarea,
+      .grow-wrap::after {
+        border: 1px solid #aaa;
+        font: inherit;
+        grid-area: 1 / 1 / 2 / 2;
+        padding: var(--size-base);
+        min-height: 2rem;
+      }
+
+      .grow-wrap button {
+        position: absolute;
+        bottom: var(--size-half);
+        right: var(--size-half);
+      }
+
+      #response {
+        padding-bottom: 6rem;
+      }
+
+      #response > div {
+        background-color: #f7f7f7;
+        border-radius: var(--border-radius);
+        max-width: 95%;
+        overflow: auto;
+        padding: var(--size-base);
+        transition: all 0.5s ease-out;
+      }
+
+      #response > .user {
+        background-color: #d3ffe5;
+        margin-left: auto;
+      }
+
+      #response > .user .meta {
+        display: none;
+      }
+
+      #response .meta {
+        bottom: -3px;
+        opacity: 0.7;
+        position: relative;
+        white-space: nowrap;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stack">
+      <header class="stack">
+        <div class="grow-wrap">
+          <textarea
+            name="content"
+            id="content"
+            rows="1"
+            placeholder="Ask a question..."
+            autofocus
+          >
+Write me a limerick</textarea
+          >
+          <button id="submit" class="primary">Send</button>
+        </div>
+      </header>
+
+      <div class="inline-between">
+        <label for="content">Ask Mistral a question</label>
+        <button id="clear" class="hidden">Clear</button>
+      </div>
+
+      <div id="response" class="stack"></div>
+    </main>
+
+    <script>
+      const API_BASE_URL = 'http://localhost:11434/api';
+      const MODEL = 'mistral';
+      const currentChat = { lastContext: null, messages: [] };
+      let controller = null;
+      let isGenerating = false;
+      let codeBlockElement = null;
+      let $currentResponse = null;
+
+      const $clear = document.getElementById('clear');
+      const $content = document.getElementById('content');
+      const $response = document.getElementById('response');
+      const $submit = document.getElementById('submit');
+
+      const formatCodeblocks = (content) => {
+        const formattedContent = content.replace(
+          /```([^`]+)```|`([^`]+)`/g,
+          (match, code, inline) => {
+            if (code) {
+              return '<pre><code>' + code + '</code></pre>';
+            } else if (inline) {
+              return '<code>' + inline + '</code>';
+            }
+          }
+        );
+
+        const contentWithNewlines = formattedContent.replace(/ {2}/g, '\n');
+
+        return contentWithNewlines;
+      };
+
+      const appendAiMessage = (content) => {
+        let lastMessage = currentChat.messages[currentChat.messages.length - 1];
+
+        if (!lastMessage || lastMessage.role !== 'ai') {
+          const newAiMessage = {
+            role: 'ai',
+            content: '',
+            date: new Date()
+          };
+          currentChat.messages.push(newAiMessage);
+          lastMessage = newAiMessage;
+        }
+
+        lastMessage.content += content;
+      };
+
+      const addMessageMeta = (date, role) => {
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+
+        return `<small class="meta"><time timestamp="${date}">${date.getDate()}/${date.getMonth()} ${hours}:${minutes}</time></small>`;
+      };
+
+      const addMessage = () => {
+        const message = currentChat.messages[currentChat.messages.length - 1];
+        const $message = document.createElement('div');
+        const $messageContent = document.createElement('div');
+
+        $message.innerHTML = addMessageMeta(message.date, message.role);
+        $messageContent.innerHTML = message.content;
+        $message.classList.add('stack-half');
+        $message.classList.add(message.role);
+
+        $message.appendChild($messageContent);
+        $message.appendChild($messageContent);
+        $response.appendChild($message);
+
+        $currentResponse = $messageContent;
+      };
+
+      const generate = async (prompt, onDataReceived) => {
+        controller = new AbortController();
+
+        return new Promise(async (resolve, reject) => {
+          const payload = {
+            model: MODEL,
+            prompt: prompt
+          };
+
+          if (currentChat.lastContext) {
+            payload.context = currentChat.lastContext;
+          }
+
+          appendAiMessage('');
+          addMessage();
+          $currentResponse.innerHTML =
+            '<span class="loading">Thinking...</span>';
+
+          try {
+            const response = await fetch(`${API_BASE_URL}/generate`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload),
+              signal: controller.signal
+            });
+
+            if (!response.ok) {
+              reject('Network response was not ok');
+              $currentResponse.innerHTML =
+                '<span>Error generating response</span>';
+              return;
+            }
+
+            $currentResponse.innerHTML = '';
+
+            const reader = response.body?.getReader();
+            let results = [];
+
+            if (reader) {
+              while (true) {
+                const { done, value } = await reader.read();
+
+                if (done) {
+                  break;
+                }
+
+                const chunk = new TextDecoder().decode(value);
+                try {
+                  const parsedChunk = JSON.parse(chunk);
+                  onDataReceived(parsedChunk);
+                  results.push(parsedChunk);
+                } catch (error) {
+                  console.error('Error parsing JSON:', error);
+                }
+              }
+            }
+
+            resolve(results);
+          } catch (err) {
+            reject(err);
+          }
+        });
+      };
+
+      const submit = async () => {
+        if (isGenerating) {
+          isGenerating = false;
+          $submit.innerText = 'Send';
+
+          if (controller) {
+            controller.abort();
+          }
+
+          return;
+        }
+
+        const prompt = $content.value.trim();
+
+        if (prompt === '') {
+          alert('Enter some text');
+          return;
+        }
+
+        isGenerating = true;
+        $submit.innerText = 'Stop';
+        $clear.classList.remove('hidden');
+
+        currentChat.messages.push({
+          role: 'user',
+          content: prompt,
+          date: new Date()
+        });
+
+        addMessage();
+
+        const response = await generate(prompt, (data) => {
+          if (data.done === false) {
+            appendAiMessage(data.response);
+
+            // if (data.response === '``') {
+            //   if (codeBlockElement) {
+            //     $response.appendChild(codeBlockElement);
+            //     codeBlockElement = null;
+            //   } else {
+            //     codeBlockElement = document.createElement('pre');
+            //     const codeElement = document.createElement('code');
+            //     codeBlockElement.appendChild(codeElement);
+            //   }
+            // } else {
+            //   if (codeBlockElement) {
+            //     codeBlockElement.firstChild.innerHTML += data.response;
+            //   } else {
+            //     $response.innerHTML += data.response;
+            //   }
+            // }
+
+            $currentResponse.innerText += data.response;
+
+            if (document.body.scrollHeight > window.innerHeight) {
+              window.scrollTo(0, document.body.scrollHeight);
+            }
+          } else if (data.done && 'context' in data) {
+            currentChat.messages.push({
+              role: 'system',
+              content: JSON.stringify(data, null, 2),
+              date: new Date()
+            });
+
+            currentChat.lastContext = data.context;
+            isGenerating = false;
+            $submit.innerText = 'Send';
+            codeBlockElement = null;
+            //$response.innerHTML = formatCodeblocks($response.innerHTML);
+          }
+        });
+      };
+
+      const clear = (el) => {
+        if (isGenerating) {
+          isGenerating = false;
+
+          if (controller) {
+            controller.abort();
+          }
+        }
+
+        currentChat.lastContext = null;
+        currentChat.messages = [];
+        $clear.classList.remove('hidden');
+        $content.value = '';
+        $response.innerHTML = '';
+      };
+
+      const expand = (el) => {
+        el.parentNode.dataset.replicatedValue = el.value;
+      };
+
+      $submit.addEventListener('click', submit);
+      $clear.addEventListener('click', clear);
+      $content.addEventListener('input', (e) => expand(e.target));
+      $content.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && event.shiftKey) {
+          return;
+        } else if (event.key === 'Enter') {
+          event.preventDefault();
+          submit();
+        }
+      });
+
+      onload = () => {
+        expand($content);
+      };
+    </script>
+  </body>
+</html>
